@@ -1,0 +1,173 @@
+import {
+    LineChart,
+    Line,
+    XAxis,
+    YAxis,
+    Tooltip,
+    ResponsiveContainer,
+} from 'recharts';
+import SocialBanner from "./SocialBanner.tsx";
+
+type DataPoint = {
+    createdAt: string;
+    likesCount: string;
+    followersCount: string;
+};
+
+
+const LegendIndicator: React.FC = () => {
+    return (
+        <div className="flex items-center space-x-4">
+            {/* Daily Likes */}
+            <div className="flex items-center">
+                <span className="w-4 h-4 bg-green-800 rounded-sm"></span>
+                <span className="ml-2 text-primary text-sm">Daily likes</span>
+            </div>
+            {/* Daily Followers */}
+            <div className="flex items-center">
+                <span className="w-4 h-4 bg-green-600 rounded-sm"></span>
+                <span className="ml-2 text-primary text-sm">Daily followers</span>
+            </div>
+        </div>
+    );
+};
+
+
+interface TikTokStatsGraphProps {
+    data: DataPoint[];
+}
+
+
+const TikTokStatsGraph: React.FC<TikTokStatsGraphProps> = ({ data }) => {
+    const formatYAxis = (value: number) => {
+        if (value === 0) return '0';
+        if (Math.abs(value) >= 1000000) return `${value / 1000000}M`;
+        if (Math.abs(value) >= 1000) return `${value / 1000}K`;
+        return value;
+    };
+
+    console.log({data})
+    const formatXAxis = (value: string) => {
+        const date = new Date(value);
+        // USE BETTER DATE FNS
+        return `${date.getDate().toString().padStart(2, '0')} ${date.toLocaleDateString('en-US', { month: 'short' }).toUpperCase()}`;
+
+    };
+
+    const formatTooltipValue = (value: number) => {
+        return new Intl.NumberFormat('en-US').format(value);
+    };
+
+    const CustomTooltip = ({ active, payload, label }: any) => {
+        if (active && payload && payload.length) {
+            return (
+                <div className="bg-[#1a1a1a] p-2 rounded">
+                    <p className="text-secondary text-sm">{formatXAxis(label)}</p>
+                    <p className="text-secondary text-sm">
+                        Likes: {formatTooltipValue(payload[0].value)}
+                    </p>
+                    <p className="text-secondary text-sm">
+                        Followers: {formatTooltipValue(payload[1].value)}
+                    </p>
+                </div>
+            );
+        }
+        return null;
+    };
+
+    const CustomXAxisTick = ({ x, y, payload }: any) => {
+        return (
+            <g transform={`translate(${x},${y})`}>
+                <text x={0} y={0} dy={5} dx={-5} textAnchor="end" fill="var(--color-primary)" transform="rotate(-90)" className="text-xs">
+                    {formatXAxis(payload.value)}
+                </text>
+            </g>
+        );
+    };
+
+    const CustomYAxisTick = ({ x, y, payload }: any) => {
+
+        // If /10 big text, if /5 smaller text
+        return (
+            <g transform={`translate(${x},${y})`}>
+                <text x={0} y={0} dy={0} dx={-5} textAnchor="end" fill="var(--color-primary)"  className="text-xs">
+                    {formatYAxis(payload.value)}
+                </text>
+            </g>
+        );
+    };
+
+    return (
+        <div className="w-full bg-black">
+            <div className="flex justify-between">
+                <LegendIndicator />
+                <SocialBanner variant="tiktok" heading="TikTok data only"/>
+            </div>
+
+            <div className="w-full h-full mt-3">
+                <ResponsiveContainer width="100%" height="100%">
+                    <LineChart
+                        data={data}
+                        margin={{ top: 5, right: 30, left: -25, bottom: 5 }}
+                    >
+                        {/*<CartesianGrid*/}
+                        {/*    strokeDasharray="3 3"*/}
+                        {/*    vertical={false}*/}
+                        {/*    stroke="#333333"*/}
+                        {/*/>*/}
+                        <XAxis
+                            dataKey="createdAt"
+                            tickFormatter={formatXAxis}
+                            stroke="var(--color-primary)"
+                            // tick={{ fill: '#666666' }}
+                            tick={<CustomXAxisTick />}
+                            height={60}
+                            tickSize={0}
+
+                        />
+                        <YAxis
+                            domain={[-5000000, 35000000]}
+                            tickFormatter={formatYAxis}
+                            tickSize={0}
+                            stroke="var(--color-primary)"
+                            tick={<CustomYAxisTick />}
+                            // tick={{ fill: '#666666' }}
+                            // tick={<CustomYAxisTick />}
+                        />
+                        {/*<ReferenceLine*/}
+                        {/*    y={0}*/}
+                        {/*    stroke="#666666"*/}
+                        {/*    strokeWidth={1}*/}
+                        {/*/>*/}
+                        <Tooltip content={<CustomTooltip />} />
+                        {/*<Legend*/}
+                        {/*    verticalAlign="top"*/}
+                        {/*    height={36}*/}
+                        {/*    wrapperStyle={{ top: -20 }}*/}
+                        {/*/>*/}
+                        <Line
+                            name="Daily likes"
+                            type="monotone"
+                            dataKey="likesCount"
+                            stroke="var(--color-green-800)"
+                            strokeWidth={2}
+                            dot={false}
+                            activeDot={{ r: 4, fill: 'var(--color-green-800)' }}
+                        />
+                        <Line
+                            name="Daily followers"
+                            type="monotone"
+                            dataKey="followersCount"
+                            stroke="var(--color-green-600)"
+                            strokeWidth={2}
+                            dot={false}
+                            activeDot={{ r: 4, fill: 'var(--color-green-600)' }}
+                        />
+                    </LineChart>
+                </ResponsiveContainer>
+            </div>
+        </div>
+    );
+};
+
+export default TikTokStatsGraph;

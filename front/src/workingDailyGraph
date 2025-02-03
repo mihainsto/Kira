@@ -1,0 +1,171 @@
+import {
+    LineChart,
+    Line,
+    XAxis,
+    YAxis,
+    CartesianGrid,
+    Tooltip,
+    ResponsiveContainer,
+    ReferenceLine,
+} from 'recharts';
+import SocialBanner from "./SocialBanner.tsx";
+
+type DataPoint = {
+    createdAt: string;
+    likesCount: string;
+    followersCount: string;
+};
+
+
+const LegendIndicator: React.FC = () => {
+    return (
+        <div className="flex items-center space-x-4">
+            {/* Daily Likes */}
+            <div className="flex items-center">
+                <span className="w-4 h-4 bg-green-500 rounded-sm"></span>
+                <span className="ml-2 text-gray-700 text-sm">Daily likes</span>
+            </div>
+            {/* Daily Followers */}
+            <div className="flex items-center">
+                <span className="w-4 h-4 bg-teal-600 rounded-sm"></span>
+                <span className="ml-2 text-gray-700 text-sm">Daily followers</span>
+            </div>
+        </div>
+    );
+};
+
+
+interface TikTokStatsGraphProps {
+    data: DataPoint[];
+}
+
+
+const TikTokStatsGraph: React.FC<TikTokStatsGraphProps> = ({ data }) => {
+    const formatYAxis = (value: number) => {
+        if (value === 0) return '0';
+        if (Math.abs(value) >= 1000000) return `${value / 1000000}M`;
+        if (Math.abs(value) >= 1000) return `${value / 1000}K`;
+        return value;
+    };
+
+    const formatXAxis = (value: string) => {
+        const date = new Date(value);
+        // USE BETTER DATE FNS
+        return `${date.getDate().toString().padStart(2, '0')} ${date.toLocaleDateString('en-US', { month: 'short' }).toUpperCase()}`;
+
+    };
+
+    const formatTooltipValue = (value: number) => {
+        return new Intl.NumberFormat('en-US').format(value);
+    };
+
+    const CustomTooltip = ({ active, payload, label }: any) => {
+        if (active && payload && payload.length) {
+            return (
+                <div className="bg-[#1a1a1a] p-2 rounded">
+                    <p className="text-gray-300 text-sm">{formatXAxis(label)}</p>
+                    <p className="text-[#22C55E] text-sm">
+                        Likes: {formatTooltipValue(payload[0].value)}
+                    </p>
+                    <p className="text-[#4ADE80] text-sm">
+                        Followers: {formatTooltipValue(payload[1].value)}
+                    </p>
+                </div>
+            );
+        }
+        return null;
+    };
+
+    const CustomXAxisTick = ({ x, y, payload }: any) => {
+        return (
+            <g transform={`translate(${x},${y})`}>
+                <text x={0} y={0} dy={5} dx={-5} textAnchor="end" fill="#666666" transform="rotate(-90)" className="text-xs">
+                    {formatXAxis(payload.value)}
+                </text>
+            </g>
+        );
+    };
+
+    const CustomYAxisTick = ({ x, y, payload }: any) => {
+
+        return (
+            <g transform={`translate(${x},${y})`}>
+                <text x={0} y={0} dy={0} dx={-5} textAnchor="end" fill="#666666"  className="text-xs">
+                    {formatYAxis(payload.value)}
+                </text>
+            </g>
+        );
+    };
+
+    return (
+        <div className="w-full h-96 bg-black p-6">
+            <div className="flex justify-between">
+                <LegendIndicator />
+                <SocialBanner variant="tiktok" heading="TikTok data only"/>
+            </div>
+
+            <ResponsiveContainer width="100%" height="100%">
+                <LineChart
+                    data={data}
+                    margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+                >
+                    {/*<CartesianGrid*/}
+                    {/*    strokeDasharray="3 3"*/}
+                    {/*    vertical={false}*/}
+                    {/*    stroke="#333333"*/}
+                    {/*/>*/}
+                    <XAxis
+                        dataKey="createdAt"
+                        tickFormatter={formatXAxis}
+                        stroke="#666666"
+                        // tick={{ fill: '#666666' }}
+                        tick={<CustomXAxisTick />}
+                        height={60}
+                        tickSize={0}
+
+                    />
+                    <YAxis
+                        domain={[-5000000, 35000000]}
+                        tickFormatter={formatYAxis}
+                        stroke="#666666"
+                        tickSize={0}
+                        tick={<CustomYAxisTick />}
+                        // tick={{ fill: '#666666' }}
+                        // tick={<CustomYAxisTick />}
+                    />
+                    {/*<ReferenceLine*/}
+                    {/*    y={0}*/}
+                    {/*    stroke="#666666"*/}
+                    {/*    strokeWidth={1}*/}
+                    {/*/>*/}
+                    <Tooltip content={<CustomTooltip />} />
+                    {/*<Legend*/}
+                    {/*    verticalAlign="top"*/}
+                    {/*    height={36}*/}
+                    {/*    wrapperStyle={{ top: -20 }}*/}
+                    {/*/>*/}
+                    <Line
+                        name="Daily likes"
+                        type="monotone"
+                        dataKey="likesCount"
+                        stroke="#22C55E"
+                        strokeWidth={2}
+                        dot={false}
+                        activeDot={{ r: 4, fill: '#22C55E' }}
+                    />
+                    <Line
+                        name="Daily followers"
+                        type="monotone"
+                        dataKey="followersCount"
+                        stroke="#4ADE80"
+                        strokeWidth={2}
+                        dot={false}
+                        activeDot={{ r: 4, fill: '#4ADE80' }}
+                    />
+                </LineChart>
+            </ResponsiveContainer>
+        </div>
+    );
+};
+
+export default TikTokStatsGraph;
